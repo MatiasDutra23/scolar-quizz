@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Hora de Jugar</title>
+    <style>
+        body {
+            font-family: 'Comic Sans MS', Arial, sans-serif;
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            margin: 0;
+            padding: 0;
+        }
+        .quiz-container {
+            background: #fff;
+            max-width: 500px;
+            margin: 40px auto;
+            padding: 32px 24px;
+            border-radius: 16px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+            position: relative;
+        }
+        .quiz-title {
+            text-align: center;
+            font-size: 2em;
+            color: #ff6f61;
+            margin-bottom: 24px;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+        .question-number {
+            font-size: 1.1em;
+            color: #0078d7;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        .question {
+            font-size: 1.3em;
+            margin-bottom: 18px;
+            color: #333;
+        }
+        .options label {
+            display: block;
+            margin-bottom: 12px;
+            background: #f7f7fa;
+            border-radius: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+            border: 2px solid transparent;
+        }
+        .options input[type="checkbox"]:checked + span {
+            background: #ffe0b2;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+        .options label:hover {
+            background: #e3f2fd;
+            border-color: #90caf9;
+        }
+        .btn {
+            background: #ff6f61;
+            color: #fff;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1em;
+            margin-top: 16px;
+            transition: background 0.2s;
+        }
+        .btn:active {
+            background: #e64a19;
+        }
+        .result {
+            margin-top: 24px;
+            font-weight: bold;
+            font-size: 1.2em;
+            text-align: center;
+        }
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 18px;
+        }
+        .nav-btn {
+            background: #90caf9;
+            color: #fff;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background 0.2s;
+        }
+        .nav-btn:active {
+            background: #1976d2;
+        }
+    </style>
+</head>
+<body>
+    <div class="quiz-container">
+        <div class="quiz-title">¡Hora de jugar!</div>
+        <div class="question-number" id="question-number"></div>
+        <div class="question" id="question"></div>
+        <form id="quiz-form" class="options"></form>
+        <button class="btn" id="submit-btn">Enviar</button>
+        <div class="navigation">
+            <button class="nav-btn" id="prev-btn">Anterior</button>
+            <button class="nav-btn" id="next-btn">Siguiente</button>
+        </div>
+        <div class="result" id="result"></div>
+    </div>
+    <script>
+        // Puedes agregar más preguntas aquí
+        const quiz = [
+            {
+                question: "¿Cuáles de estos numeros son divisibles entre 2?",
+                options: [
+                    "891714",
+                    "27465",
+                    "75648",
+                    "87461"
+                ],
+                answers: [0, 2] // índices de respuestas correctas
+            },
+            {
+                question: "¿Cuáles de estos numeros son divisibles entre 5?",
+                options: [
+                    "24800",
+                    "87545",
+                    "987275",
+                    "98741"
+                ],
+                answers: [0,1,2]
+            },
+            {
+                question: "¿Cuáles de estos numeros son divisibles entre 10?",
+                options: [
+                    "87740",
+                    "24800",
+                    "927130",
+                    "44751"
+                ],
+                answers: [0,1,2]
+            },
+            {
+                question: "Señala el valor de b para que el numero 7454b sea divisible entre 5 y 10 a la vez.",
+                options: [
+                    "5",
+                    "7",
+                    "0"
+                ],
+                answers: [2]
+            },
+            {
+                question: "señala el valor de b para que el numero 4751b sea divisible entre 2",
+                options: [
+                    "1",
+                    "6",
+                    "5"
+                ],
+                answers: [1]
+            }
+        ];
+
+        let currentQuestion = 0;
+        let userAnswers = Array(quiz.length).fill([]); // Para guardar respuestas seleccionadas
+        let answered = Array(quiz.length).fill(false); // Para saber si ya se respondió
+
+        function renderQuestion(idx) {
+            document.getElementById('result').textContent = '';
+            document.getElementById('question-number').textContent = `Pregunta ${idx + 1} de ${quiz.length}`;
+            document.getElementById('question').textContent = quiz[idx].question;
+            const form = document.getElementById('quiz-form');
+            form.innerHTML = '';
+            quiz[idx].options.forEach((option, i) => {
+                const label = document.createElement('label');
+                label.innerHTML = `
+                    <input type="checkbox" name="option" value="${i}" ${userAnswers[idx].includes(i) ? 'checked' : ''} ${answered[idx] ? 'disabled' : ''}>
+                    <span>${option}</span>
+                `;
+                form.appendChild(label);
+            });
+            document.getElementById('submit-btn').disabled = answered[idx];
+        }
+
+        function checkAnswer(idx) {
+            if (answered[idx]) return;
+            const selected = Array.from(document.querySelectorAll('input[name="option"]:checked')).map(el => parseInt(el.value));
+            userAnswers[idx] = selected;
+            answered[idx] = true;
+            const correct = quiz[idx].answers.sort().join(',');
+            const user = selected.sort().join(',');
+            const result = document.getElementById('result');
+            if (selected.length === 0) {
+                result.textContent = "Por favor selecciona al menos una opción.";
+                result.style.color = "red";
+                answered[idx] = false;
+                return;
+            }
+            if (user === correct) {
+                result.textContent = "¡Correcto!";
+                result.style.color = "green";
+            } else {
+                let correctOptions = quiz[idx].answers.map(i => quiz[idx].options[i]).join(', ');
+                result.textContent = "Incorrecto. Las respuestas correctas son: " + correctOptions;
+                result.style.color = "red";
+            }
+            // Deshabilitar los checkboxes y el botón de enviar
+            Array.from(document.querySelectorAll('input[name="option"]')).forEach(el => el.disabled = true);
+            document.getElementById('submit-btn').disabled = true;
+        }
+
+        document.getElementById('submit-btn').onclick = function(e) {
+            e.preventDefault();
+            checkAnswer(currentQuestion);
+        };
+
+        document.getElementById('next-btn').onclick = function(e) {
+            e.preventDefault();
+            if (currentQuestion < quiz.length - 1) {
+                currentQuestion++;
+                renderQuestion(currentQuestion);
+            }
+        };
+
+        document.getElementById('prev-btn').onclick = function(e) {
+            e.preventDefault();
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                renderQuestion(currentQuestion);
+            }
+        };
+
+        // Inicializar
+        renderQuestion(currentQuestion);
+        window.addEventListener('beforeunload', () => {
+            localStorage.setItem('quizUserAnswers', JSON.stringify(userAnswers));
+            localStorage.setItem('quizAnswered', JSON.stringify(answered));
+        });
+
+        function loadAnswersFromStorage() {
+            const storedAnswers = localStorage.getItem('quizUserAnswers');
+            const storedAnswered = localStorage.getItem('quizAnswered');
+            if (storedAnswers && storedAnswered) {
+                try {
+                    const parsedAnswers = JSON.parse(storedAnswers);
+                    const parsedAnswered = JSON.parse(storedAnswered);
+                    if (Array.isArray(parsedAnswers) && Array.isArray(parsedAnswered) &&
+                        parsedAnswers.length === quiz.length && parsedAnswered.length === quiz.length) {
+                        userAnswers = parsedAnswers;
+                        answered = parsedAnswered;
+                    }
+                } catch (e) {
+                    // Si hay error, no cargar nada
+                }
+            }
+        }
+
+        loadAnswersFromStorage();
+    </script>
+</body>
+</html>
